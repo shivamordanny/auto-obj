@@ -1,1 +1,1 @@
-# auto-obj
+# mmdetection_dvc

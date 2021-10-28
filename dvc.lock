@@ -1,0 +1,73 @@
+schema: '2.0'
+stages:
+  prepare_data@val:
+    cmd: python src/prepare_data.py --coco_file data/coco_sample/annotations/split_val.json
+      --output_file processed_data/val_split_with_ann_id.json
+    deps:
+    - path: data/coco_sample/annotations/split_val.json
+      md5: cc5058b3d49653f66d41e6fb2b1b2297
+      size: 2925021
+    - path: src/prepare_data.py
+      md5: cb54001a034fa3afb79a58f0084d7548
+      size: 1078
+    outs:
+    - path: processed_data/val_split_with_ann_id.json
+      md5: 46b840659b75ed28a3208f9cd012f21d
+      size: 4253881
+  prepare_data@train:
+    cmd: python src/prepare_data.py --coco_file data/coco_sample/annotations/split_train.json
+      --output_file processed_data/train_split_with_ann_id.json
+    deps:
+    - path: data/coco_sample/annotations/split_train.json
+      md5: 2d48da641f28c60535a5bc3395173046
+      size: 11510879
+    - path: src/prepare_data.py
+      md5: cb54001a034fa3afb79a58f0084d7548
+      size: 1078
+    outs:
+    - path: processed_data/train_split_with_ann_id.json
+      md5: 396984d6c08dbe55a93b19cc156c44ba
+      size: 16774499
+  train:
+    cmd: python src/train.py --dataset configs/coco_sample.py --model configs/retinanet_r50_fpn.py
+      --schedule configs/schedule_1x.py --runtime configs/runtime.py --work_dir training/checkpoints
+    deps:
+    - path: configs/
+      md5: 7e8cc593c5d5eac056cf226ebaa1c959.dir
+      size: 4197
+      nfiles: 4
+    - path: processed_data
+      md5: 19d9cecb424ca4f5006191fe994686dd.dir
+      size: 21028438
+      nfiles: 3
+    - path: src/train.py
+      md5: 14d363430cd499393a984241c9baf563
+      size: 2630
+    params:
+      params.yaml:
+        optimizer.weight_decay: 0.001
+    outs:
+    - path: training/checkpoints
+      md5: 15803a2e3b280fd402b182ff943c604c.dir
+      size: 872855903
+      nfiles: 4
+    - path: training/metrics
+      md5: ab653fa9eb2774c0cbf0ef55c7124d8a.dir
+      size: 45765
+      nfiles: 11
+  eval:
+    cmd: python src/eval.py --dataset configs/coco_sample.py --model configs/retinanet_r50_fpn.py
+      --checkpoint_file training/checkpoints/latest.pth --output_dir eval/ --n_samples
+      20 --score_threshold .5
+    deps:
+    - path: src/eval.py
+      md5: fb6365709c568ca65b4c2ebfff18698c
+      size: 1808
+    - path: training/checkpoints/latest.pth
+      md5: d490131393c48a5c5954d31ad5a069a0
+      size: 290936633
+    outs:
+    - path: eval/
+      md5: df87c406f3f917a9dafd51f2f5ba6e08.dir
+      size: 1812233
+      nfiles: 20
